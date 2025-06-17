@@ -12,10 +12,12 @@ from st_screen_stats import ScreenData
 st.set_page_config(layout="centered")
 screenD = ScreenData(setTimeout=1000)
 screen_d = screenD.st_screen_data()
-device_width = screen_d["innerWidth"]
 
-# Handle the case where the value might not be available on the first script run
-if device_width is None:
+# Check if screen_d is not None and the key exists before accessing it.
+if screen_d and "innerWidth" in screen_d:
+    device_width = screen_d["innerWidth"]
+else:
+    # Set a default value if screen data isn't available yet.
     device_width = 0
 
 # --- Dynamic Theme-Aware Color Palettes ---
@@ -23,7 +25,7 @@ if device_width is None:
 # Define color palettes for both light and dark themes.
 light_theme_colors = {
     "light_square": "#f0f2f6",  # Light gray for light squares
-    "dark_square": "#bdbdbd",   # Darker gray for dark squares
+    "dark_square": "#bdbdbd",    # Darker gray for dark squares
     "number_color": "#1e3a8a",  # Deep blue for text
     "arrow_color": "#2563eb",   # Vibrant blue for arrows
     "start_highlight": "#d32f2f" # Red to highlight the start square
@@ -115,7 +117,7 @@ if 'fig_size_px' not in st.session_state:
 if "board_n" not in st.session_state:
     st.session_state.board_n = 5
 
-# --- Render Controls --- 
+# --- Render Controls ---
 def render_controls():
     """Renders all the control widgets."""
     st.header("Controls")
@@ -128,7 +130,7 @@ def render_controls():
     elif current_board_n > 10:
         current_board_n = 10
     
-    board_n = st.number_input("Board Size", min_value=5, max_value=10, 
+    board_n = st.number_input("Board Size", min_value=5, max_value=10,
                               value=current_board_n, key="board_n_input")
 
     if board_n != st.session_state.board_n:
@@ -151,7 +153,7 @@ def render_controls():
     animation_speed = speed_options[selected_speed] # This will be used later
     st.session_state.animation_speed = animation_speed # Store in session state
 
-# --- Render Play --- 
+# --- Render Play ---
 def play_button():
     c1, c2 = st.columns(2)
     with c1:
@@ -179,7 +181,7 @@ def play_button():
             st.rerun()
 
 # --- Responsive Layout --
-if device_width > 0 and device_width < 650:
+if device_width < 650:
     # --- Mobile Layout ---
     with st.expander("Show Controls", expanded=False):
         render_controls() # Place all controls inside the expander
@@ -187,7 +189,7 @@ if device_width > 0 and device_width < 650:
     display_pos = tuple(x + 1 for x in st.session_state.start_pos)
     st.divider()
     st.caption(f"Selected Start: `{display_pos}`")
-    plot_placeholder = st.container() # The plot will take the full width below
+    plot_placeholder = st.empty()
 else:
     # --- Desktop Layout ---
     col_left, col_center = st.columns([1, 2])
@@ -215,7 +217,6 @@ def draw_board(step, board_colors, is_interactive=False):
     ax.invert_yaxis()
     ax.axis('off')
 
-    # --- (The entire drawing logic for patches, text, and arrows remains identical) ---
     # Draw chessboard
     for r in range(n):
         for c in range(n):
@@ -246,7 +247,6 @@ def draw_board(step, board_colors, is_interactive=False):
                          fc=board_colors["arrow_color"], ec=board_colors["arrow_color"],
                          length_includes_head=True)
 
-    # --- MODIFICATION START ---
     # If the board is for the interactive selector, convert to an image.
     if is_interactive:
         img_buffer = BytesIO()
@@ -258,7 +258,6 @@ def draw_board(step, board_colors, is_interactive=False):
     # Otherwise, return the figure object directly for st.pyplot.
     else:
         return fig
-    # --- MODIFICATION END ---
 
 # --- Animation Loop & Interactive Board ---
 if st.session_state.tour_running:
@@ -272,17 +271,15 @@ if st.session_state.tour_running:
             progress_bar.progress(progress)
             progress_text.text(f"Progress: {i + 1} / {total_steps}")
 
-            # --- MODIFICATION START ---
             # 1. Get the Matplotlib figure object directly.
             board_fig = draw_board(i + 1, colors, is_interactive=False)
             
-            # 2. Render the figure using st.pyplot.
-            #    use_container_width is the equivalent of use_column_width for pyplot.
+            # 2. Render the figure using st.pyplot into the placeholder.
+            #    This will now work correctly on both desktop and mobile.
             plot_placeholder.pyplot(board_fig, use_container_width=True)
 
             # 3. CRITICAL: Close the figure to free up memory.
             plt.close(board_fig)
-            # --- MODIFICATION END ---
 
             if st.session_state.animation_speed > 0:
                 time.sleep(st.session_state.animation_speed)
