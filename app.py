@@ -131,10 +131,10 @@ def render_controls():
     # Ensure the value is within the min/max range before passing it
     if current_board_n < 5:
         current_board_n = 5
-    elif current_board_n > 10:
+    elif current_board_n > 20:
         current_board_n = 10
     
-    board_n = st.number_input("Board Size", min_value=5, max_value=10,
+    board_n = st.number_input("Board Size", min_value=5, max_value=20,
                               value=current_board_n, key="board_n_input")
 
     if board_n != st.session_state.board_n:
