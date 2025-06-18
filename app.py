@@ -9,7 +9,11 @@ from PIL import Image
 from st_screen_stats import ScreenData
 
 # Use a single, centered layout for the page configuration.
-st.set_page_config(layout="centered")
+st.set_page_config(
+    layout="centered",
+    page_title="Knight's Tour Challenge",  # Changes the browser tab title
+    page_icon="🐴",
+)
 screenD = ScreenData(setTimeout=1000)
 screen_d = screenD.st_screen_data()
 
